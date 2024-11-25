@@ -24,7 +24,8 @@ impl<N: Network> Serialize for Authorization<N> {
                 authorization.serialize_field("requests", &self.requests.read().clone())?;
                 authorization.serialize_field(
                     "transitions",
-                    &self.transitions.read().values().collect::<Vec<&Transition<N>>>(),
+                    // NOTE: reverse the order of transitions for wasm sdk
+                    &self.transitions.read().values().rev().collect::<Vec<&Transition<N>>>(),
                 )?;
                 authorization.end()
             }
