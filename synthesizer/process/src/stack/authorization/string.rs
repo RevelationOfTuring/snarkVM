@@ -52,7 +52,7 @@ impl<N: Network> Authorization<N> {
         let mut ordered_transitions = IndexMap::new();
         for request in self.requests.read().iter() {
             let transition = filter.get(&request.program_id().to_string()).expect("program id mismatched");
-            ordered_transitions.insert(transition.id(), transition.clone());
+            ordered_transitions.insert(transition.id().clone(), transition.clone());
         }
 
         self.transitions = Arc::new(RwLock::new(ordered_transitions));
