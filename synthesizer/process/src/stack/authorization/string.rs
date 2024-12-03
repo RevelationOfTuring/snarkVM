@@ -13,6 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use std::collections::HashMap;
+
 use super::*;
 
 impl<N: Network> FromStr for Authorization<N> {
@@ -35,5 +37,24 @@ impl<N: Network> Display for Authorization<N> {
     /// Displays the authorization as a JSON-string.
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", serde_json::to_string(self).map_err::<fmt::Error, _>(ser::Error::custom)?)
+    }
+}
+
+// sort inner transitions with the order of the inner request's program id
+// it serves for the authorization building in wasm sdk
+impl<N: Network> Authorization<N> {
+    pub fn sort_transitions(&mut self) {
+        let mut filter = HashMap::with_capacity(self.transitions.read().len());
+        for transition in self.transitions().into_values() {
+            filter.insert(transition.program_id().to_string(), transition);
+        }
+
+        let mut ordered_transitions = IndexMap::new();
+        for request in self.requests.read().iter() {
+            let transition = filter.get(&request.program_id().to_string()).expect("program id mismatched");
+            ordered_transitions.insert(transition.id(), transition.clone());
+        }
+
+        self.transitions = Arc::new(RwLock::new(ordered_transitions));
     }
 }
